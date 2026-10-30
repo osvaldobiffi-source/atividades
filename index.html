@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atividades</title>
+<meta name="theme-color" content="#F3F5FA">
+<link rel="icon" type="image/png" href="cor-e-numero/icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@800&family=Nunito:wght@400;700;800&display=swap">
+<style>
+:root {
+  --bg: #F3F5FA; --surface: #FFFFFF; --fg: #1D2433; --muted: #5C6578; --line: #DCE1EC; --accent: #2B4FD8;
+  --f-display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --f-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #12151D; --surface: #1B2030; --fg: #EEF1F8; --muted: #A3ABBD; --line: #2E3547; --accent: #7D97FF; color-scheme: dark; }
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 var(--f-body);
+  padding-top: calc(32px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+main { max-width: 560px; margin: 0 auto; display: grid; gap: 20px; }
+h1 { margin: 0; font: 800 2.2rem/1.1 var(--f-display); }
+p { margin: 0; color: var(--muted); }
+ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+a.app {
+  display: flex; align-items: center; gap: 16px; padding: 14px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  color: inherit; text-decoration: none;
+}
+a.app:hover, a.app:focus-visible { border-color: var(--accent); outline: none; }
+a.app img { width: 64px; height: 64px; border-radius: 14px; flex: none; }
+a.app strong { display: block; font: 800 1.3rem/1.2 var(--f-display); }
+a.app span { color: var(--muted); font-size: 0.95rem; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Atividades</h1>
+    <p>Jogos de tela para usar junto com materiais na mesa.</p>
+  </div>
+  <ul>
+    <li>
+      <a class="app" href="cor-e-numero/">
+        <img src="cor-e-numero/icon-192.png" alt="">
+        <div><strong>Cor e Número</strong><span>A tela sorteia uma cor e um número de 1 a 4. A criança coloca a bolinha da cor na folha do número.</span></div>
+      </a>
+    </li>
+  </ul>
+</main>
+</body>
+</html>
