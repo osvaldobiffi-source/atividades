@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ficha e Número</title>
+<meta name="description" content="A tela sorteia um número de 1 a 10 e uma ficha colorida. A criança coloca a ficha da cor sobre o número na folha.">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Ficha e Número">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;600;700;800&display=swap">
+<style>
+/* Layout: two views. Setup = one centered card on a calm ground. Play = white screen, big black number beside a colored token (stacked when the screen is tall). */
+:root {
+  --bg: #F3F5FA;
+  --surface: #FFFFFF;
+  --fg: #1D2433;
+  --muted: #5C6578;
+  --line: #DCE1EC;
+  --accent: #2B4FD8;
+  --accent-fg: #FFFFFF;
+
+  /* the four game colors: fixed in both themes, they are the content */
+  --c-vermelho: #E3262E;
+  --c-verde: #1F9D45;
+  --c-azul: #1E5BD8;
+  --c-amarelo: #FFCC12;
+
+  /* play screen is always a white sheet with black ink, like the printed board */
+  --sheet: #FFFFFF;
+  --ink: #15181F;
+
+  --f-display: "Baloo 2", "Nunito", system-ui, sans-serif;
+  --f-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151D; --surface: #1B2030; --fg: #EEF1F8; --muted: #A3ABBD; --line: #2E3547;
+    --accent: #7D97FF; --accent-fg: #0E1220; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151D; --surface: #1B2030; --fg: #EEF1F8; --muted: #A3ABBD; --line: #2E3547;
+  --accent: #7D97FF; --accent-fg: #0E1220; color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+[hidden] { display: none !important; }
+
+/* ---------- Setup ---------- */
+#setup {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding-top: calc(24px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: grid;
+  gap: 24px;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.mark { flex: none; display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 14px;
+  background: var(--sheet); border: 1px solid var(--line); }
+.mark b { font: 800 30px/1 var(--f-display); color: var(--ink); transform: translateY(2px); }
+.mark i { width: 26px; height: 26px; border-radius: 50%; background: var(--c-vermelho); }
+h1 { margin: 0; font: 800 2rem/1.1 var(--f-display); text-wrap: balance; }
+.lead { margin: 4px 0 0; color: var(--muted); }
+
+.group { display: grid; gap: 10px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.label { font-weight: 800; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0; }
+
+.seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg input { position: absolute; opacity: 0; pointer-events: none; }
+.seg label {
+  min-width: 56px; padding: 10px 14px; text-align: center;
+  border: 2px solid var(--line); border-radius: 12px;
+  font-weight: 800; cursor: pointer; font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.seg input:checked + label { border-color: var(--accent); background: var(--accent); color: var(--accent-fg); }
+.seg input:focus-visible + label { outline: 3px solid var(--accent); outline-offset: 2px; }
+.hint { margin: 0; font-size: 0.9rem; color: var(--muted); }
+
+.toggles { display: grid; gap: 4px; }
+.toggle { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 10px 0; cursor: pointer; }
+.toggle + .toggle { border-top: 1px solid var(--line); }
+.toggle span { font-weight: 700; }
+.toggle small { display: block; font-weight: 400; color: var(--muted); font-size: 0.85rem; }
+.switch { appearance: none; -webkit-appearance: none; flex: none; width: 48px; height: 28px; border-radius: 99px;
+  background: var(--line); position: relative; cursor: pointer; transition: background .15s; margin: 0; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--surface); transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.switch:checked { background: var(--accent); }
+.switch:checked::after { transform: translateX(20px); }
+.switch:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+.start {
+  appearance: none; border: 0; border-radius: 16px; padding: 18px;
+  background: var(--accent); color: var(--accent-fg);
+  font: 800 1.35rem/1 var(--f-display); cursor: pointer;
+}
+.start:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+.how { margin: 0; font-size: 0.9rem; color: var(--muted); }
+
+/* ---------- Play ---------- */
+#play {
+  position: fixed; inset: 0;
+  background: var(--sheet);
+  color: var(--ink);
+  display: grid; place-items: center;
+  user-select: none; -webkit-user-select: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.stage {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8vmin;
+}
+.num {
+  font: 800 min(52vmin, 420px)/1 var(--f-display);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  min-width: 1.15em; text-align: center;
+  transform: translateY(5%);
+}
+.ficha {
+  width: min(46vmin, 380px); aspect-ratio: 1; max-width: 100%;
+  border-radius: 50%;
+  background: var(--c-vermelho);
+  box-shadow: inset 0 -1.2vmin 0 rgba(0,0,0,.14), inset 0 1vmin 0 rgba(255,255,255,.18);
+}
+@media (orientation: portrait) {
+  .stage { flex-direction: column; gap: 2vmin; }
+  .num { font-size: min(62vmin, 420px); }
+  .ficha { width: min(58vmin, 380px); }
+}
+.colorname {
+  position: absolute; left: 0; right: 0;
+  bottom: max(28px, calc(env(safe-area-inset-bottom, 0px) + 20px));
+  text-align: center;
+  font: 800 clamp(1.8rem, 7vmin, 3.4rem)/1 var(--f-display);
+  color: var(--ink); text-transform: uppercase; letter-spacing: 0.06em;
+}
+.pop { animation: pop .35s cubic-bezier(.2,1.6,.4,1); }
+@keyframes pop { from { transform: scale(.7); } to { transform: scale(1); } }
+
+.bar {
+  position: absolute; left: 0; bottom: 0; height: 10px; width: 100%;
+  background: rgba(21,24,31,.18); transform-origin: left center;
+}
+
+.ctrl {
+  position: absolute;
+  top: max(14px, calc(env(safe-area-inset-top, 0px) + 10px));
+  right: max(14px, calc(env(safe-area-inset-right, 0px) + 10px));
+  display: flex; gap: 10px;
+}
+.ctrl button {
+  appearance: none; border: 0; cursor: pointer;
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(21,24,31,.08); color: var(--ink);
+  display: grid; place-items: center;
+}
+.ctrl button:focus-visible { outline: 3px solid var(--c-azul); outline-offset: 2px; }
+.ctrl svg { width: 24px; height: 24px; fill: currentColor; }
+.tapnote {
+  position: absolute;
+  top: max(24px, calc(env(safe-area-inset-top, 0px) + 20px));
+  left: max(20px, calc(env(safe-area-inset-left, 0px) + 16px));
+  font-weight: 800; color: var(--ink); opacity: .55; font-size: 0.95rem;
+}
+.paused-tag {
+  position: absolute; left: 50%; top: max(24px, calc(env(safe-area-inset-top, 0px) + 20px)); transform: translateX(-50%);
+  background: var(--ink); color: var(--sheet); padding: 6px 14px; border-radius: 99px; font-weight: 800;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<main id="setup">
+  <div class="card">
+    <div class="brand">
+      <div class="mark" aria-hidden="true"><b>7</b><i></i></div>
+      <div>
+        <h1>Ficha e Número</h1>
+        <p class="lead">A tela mostra um número e uma ficha colorida sorteados. A criança coloca a ficha da mesma cor sobre o número na folha.</p>
+      </div>
+    </div>
+
+    <fieldset class="group">
+      <legend class="label">Números de 1 até</legend>
+      <div class="seg">
+        <input type="radio" name="max" id="mx-3" value="3"><label for="mx-3">3</label>
+        <input type="radio" name="max" id="mx-5" value="5"><label for="mx-5">5</label>
+        <input type="radio" name="max" id="mx-10" value="10" checked><label for="mx-10">10</label>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend class="label">Trocar a cada</legend>
+      <div class="seg">
+        <input type="radio" name="speed" id="sp-3" value="3"><label for="sp-3">3 s</label>
+        <input type="radio" name="speed" id="sp-5" value="5"><label for="sp-5">5 s</label>
+        <input type="radio" name="speed" id="sp-8" value="8" checked><label for="sp-8">8 s</label>
+        <input type="radio" name="speed" id="sp-12" value="12"><label for="sp-12">12 s</label>
+        <input type="radio" name="speed" id="sp-20" value="20"><label for="sp-20">20 s</label>
+        <input type="radio" name="speed" id="sp-0" value="0"><label for="sp-0">No toque</label>
+      </div>
+      <p class="hint" id="speedHint">Troca sozinho a cada 8 segundos.</p>
+    </fieldset>
+
+    <div class="group">
+      <span class="label">Opções</span>
+      <div class="toggles">
+        <label class="toggle" for="optRepeat">
+          <span>Evitar repetir igual<small>Nunca sorteia a mesma cor com o mesmo número duas vezes seguidas.</small></span>
+          <input class="switch" type="checkbox" id="optRepeat" checked>
+        </label>
+        <label class="toggle" for="optVoice">
+          <span>Falar em voz alta<small>Diz “Sete, vermelho” a cada troca.</small></span>
+          <input class="switch" type="checkbox" id="optVoice">
+        </label>
+        <label class="toggle" for="optName">
+          <span>Mostrar o nome da cor<small>Escreve VERMELHO, VERDE, AZUL ou AMARELO embaixo.</small></span>
+          <input class="switch" type="checkbox" id="optName">
+        </label>
+      </div>
+    </div>
+
+    <button class="start" id="startBtn" type="button">Começar</button>
+    <p class="how">Durante a atividade: o botão no canto pausa ou volta para esta tela. No modo “No toque”, toque em qualquer lugar da tela para sortear o próximo.</p>
+  </div>
+</main>
+
+<section id="play" hidden aria-live="polite">
+  <div class="stage" id="stage">
+    <span class="num" id="num">7</span>
+    <div class="ficha" id="ficha" role="img" aria-label="ficha vermelha"></div>
+  </div>
+  <div class="colorname" id="colorName" hidden></div>
+  <div class="tapnote" id="tapNote" hidden>Toque para o próximo</div>
+  <div class="paused-tag" id="pausedTag" hidden>Pausado</div>
+  <div class="bar" id="bar" hidden></div>
+  <div class="ctrl">
+    <button type="button" id="pauseBtn" aria-label="Pausar">
+      <svg viewBox="0 0 24 24" id="pauseIcon"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+    </button>
+    <button type="button" id="exitBtn" aria-label="Voltar às opções">
+      <svg viewBox="0 0 24 24"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4L13.4 12 19 6.4 17.6 5 12 10.6z"/></svg>
+    </button>
+  </div>
+</section>
+
+<script>
+(() => {
+  const COLORS = [
+    { name: "vermelho", css: "var(--c-vermelho)", fem: "vermelha" },
+    { name: "verde",    css: "var(--c-verde)",    fem: "verde" },
+    { name: "azul",     css: "var(--c-azul)",     fem: "azul" },
+    { name: "amarelo",  css: "var(--c-amarelo)",  fem: "amarela" },
+  ];
+  const NUM_WORDS = ["um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez"];
+
+  const $ = (id) => document.getElementById(id);
+  const setup = $("setup"), play = $("play"), stage = $("stage"), num = $("num"), ficha = $("ficha");
+  const colorName = $("colorName"), bar = $("bar"), tapNote = $("tapNote"), pausedTag = $("pausedTag");
+  const pauseBtn = $("pauseBtn"), pauseIcon = $("pauseIcon");
+
+  const ICON_PAUSE = '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+  const ICON_PLAY = '<path d="M8 5v14l11-7z"/>';
+
+  // True randomness from the browser's crypto source, unbiased.
+  function rand(n) {
+    const buf = new Uint32Array(1);
+    const limit = Math.floor(0x100000000 / n) * n;
+    let x;
+    do { crypto.getRandomValues(buf); x = buf[0]; } while (x >= limit);
+    return x % n;
+  }
+
+  let seconds = 8, maxNum = 10, timer = null, paused = false, last = null, deadline = 0, remaining = 0, raf = 0;
+  let wakeLock = null;
+
+  const checked = (name, fallback) => {
+    const r = document.querySelector(`input[name="${name}"]:checked`);
+    return Number(r ? r.value : fallback);
+  };
+
+  function readOpts() {
+    seconds = checked("speed", 8);
+    maxNum = checked("max", 10);
+    try { localStorage.setItem("fn-opts", JSON.stringify({
+      speed: seconds, max: maxNum, repeat: $("optRepeat").checked, voice: $("optVoice").checked, name: $("optName").checked })); } catch (e) {}
+  }
+  function loadOpts() {
+    try {
+      const o = JSON.parse(localStorage.getItem("fn-opts") || "null");
+      if (!o) return;
+      const r = $("sp-" + o.speed); if (r) r.checked = true;
+      const m = $("mx-" + o.max); if (m) m.checked = true;
+      $("optRepeat").checked = !!o.repeat; $("optVoice").checked = !!o.voice; $("optName").checked = !!o.name;
+    } catch (e) {}
+  }
+  function updateHint() {
+    const v = checked("speed", 8);
+    $("speedHint").textContent = v === 0
+      ? "Só troca quando alguém tocar na tela."
+      : `Troca sozinho a cada ${v} segundos.`;
+  }
+
+  function draw() {
+    let c, n;
+    do { c = rand(4); n = rand(maxNum); }
+    while ($("optRepeat").checked && last && last.c === c && last.n === n);
+    last = { c, n };
+    const color = COLORS[c];
+    ficha.style.backgroundColor = color.css;
+    ficha.setAttribute("aria-label", "ficha " + color.fem);
+    num.textContent = String(n + 1);
+    colorName.textContent = color.name;
+    stage.classList.remove("pop"); void stage.offsetWidth; stage.classList.add("pop");
+    if ($("optVoice").checked) speak(`${NUM_WORDS[n]}, ${color.name}`);
+  }
+
+  function speak(text) {
+    try {
+      if (!("speechSynthesis" in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "pt-BR"; u.rate = 0.9;
+      const v = speechSynthesis.getVoices().find(v => /^pt(-|_)BR/i.test(v.lang)) ||
+                speechSynthesis.getVoices().find(v => /^pt/i.test(v.lang));
+      if (v) u.voice = v;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+
+  function schedule(ms) {
+    clearTimeout(timer); cancelAnimationFrame(raf);
+    if (!seconds) return;
+    deadline = performance.now() + ms;
+    timer = setTimeout(() => { draw(); schedule(seconds * 1000); }, ms);
+    const total = seconds * 1000;
+    const tick = () => {
+      const left = Math.max(0, deadline - performance.now());
+      bar.style.transform = `scaleX(${left / total})`;
+      if (left > 0) raf = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  function setPaused(p) {
+    paused = p;
+    pausedTag.hidden = !p;
+    pauseIcon.innerHTML = p ? ICON_PLAY : ICON_PAUSE;
+    pauseBtn.setAttribute("aria-label", p ? "Continuar" : "Pausar");
+    if (p) {
+      remaining = Math.max(0, deadline - performance.now());
+      clearTimeout(timer); cancelAnimationFrame(raf);
+      try { speechSynthesis.cancel(); } catch (e) {}
+    } else if (seconds) {
+      schedule(remaining || seconds * 1000);
+    }
+  }
+
+  async function keepAwake() {
+    try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch (e) {}
+  }
+
+  function start() {
+    readOpts();
+    setup.hidden = true; play.hidden = false;
+    colorName.hidden = !$("optName").checked;
+    bar.hidden = !seconds;
+    tapNote.hidden = !!seconds;
+    last = null;
+    setPaused(false);
+    draw();
+    schedule(seconds * 1000);
+    try { const el = document.documentElement; if (el.requestFullscreen && !document.fullscreenElement) el.requestFullscreen().catch(() => {}); } catch (e) {}
+    keepAwake();
+  }
+
+  function stop() {
+    clearTimeout(timer); cancelAnimationFrame(raf);
+    try { speechSynthesis.cancel(); } catch (e) {}
+    play.hidden = true; setup.hidden = false;
+    try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {}
+    try { wakeLock && wakeLock.release(); } catch (e) {}
+    wakeLock = null;
+  }
+
+  $("startBtn").addEventListener("click", start);
+  $("exitBtn").addEventListener("click", (e) => { e.stopPropagation(); stop(); });
+  pauseBtn.addEventListener("click", (e) => { e.stopPropagation(); setPaused(!paused); });
+  play.addEventListener("click", () => {
+    if (paused) { setPaused(false); return; }
+    if (!seconds) draw();
+  });
+  document.querySelectorAll('input[name="speed"]').forEach(r => r.addEventListener("change", updateHint));
+  document.addEventListener("keydown", (e) => {
+    if (play.hidden) return;
+    if (e.key === "Escape") stop();
+    else if (e.key === " " || e.key === "Enter") { e.preventDefault(); if (seconds) setPaused(!paused); else draw(); }
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && !play.hidden) keepAwake();
+  });
+  try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices(); } catch (e) {}
+
+  loadOpts();
+  updateHint();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>

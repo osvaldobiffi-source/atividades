@@ -5,6 +5,7 @@ Pequenos aplicativos de tela para atividades com crianças. Funcionam no navegad
 | Atividade | Pasta |
 |---|---|
 | Cor e Número | [`cor-e-numero/`](cor-e-numero/) |
+| Ficha e Número | [`ficha-e-numero/`](ficha-e-numero/) |
 
 ## Instalar no celular
 
